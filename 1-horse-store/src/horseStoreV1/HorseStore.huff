@@ -1,0 +1,66 @@
+//send calldata => function dispatch => function
+//60008060093d393df3%
+//60018060093d393df35f% - 5f => PUSH0
+//60058060093d393df35f3560e01c%
+/* Interfaces*/
+#define function updateHorseNumber(uint256) nonpayable returns()
+#define function readNumberOfHorses() view returns(uint256)
+
+#define constant NUMBER_OF_HORSES_STORAGE_SLOT = FREE_STORAGE_POINTER() //0 -> no. of horses 0x00
+
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 //[0]
+    calldataload //[calldata]
+    0xe0   //[0xe0, calldata]
+    shr    //[function_selector]
+    //Jump -> to function data associated with the selector
+    //If f_select == updateHorseNumber(uint256)[0xcdfead2e] -> Jump to this code
+    //If f_Select == readNumberOfHorses[0xe026c017] -> Jump to this code
+    dup1 //[function_selector, function_selector]
+    __FUNC_SIG(updateHorseNumber) //0xcdfead2e //[0xcdfead2e,function_selector, function_selector]
+    eq //[1/0, function_selector]
+    //Jump to updateHorseNumber code if true
+    updatejump      //[updateHorseNumber PC,1/0, function_selector]
+    jumpi //[function_selector]
+    __FUNC_SIG(readNumberOfHorses) //[0xe026c017, function_selector]
+    eq //[0,1]
+    readJump
+    jumpi
+
+    0x00 0x00 revert
+
+    updatejump: 
+            SET_NUMBER_OF_HORSES() //Need optimization that running through one function it should stop or revert
+    readJump:
+            GET_NUMBER_OF_HORSES()
+
+}
+
+#define macro SET_NUMBER_OF_HORSES() = takes(0) returns(0) {
+    //1. get the value from the calldata first
+    0x04//[4]
+    calldataload //[7]
+    [NUMBER_OF_HORSES_STORAGE_SLOT] //[ptr to slot 0, 7]
+    sstore
+    stop
+
+    //2. store the key value () of storage slot for this variable
+    //3. sstore
+}
+
+#define macro GET_NUMBER_OF_HORSES()= takes(0) returns(1) {
+    //1. Get the storage slot
+    [NUMBER_OF_HORSES_STORAGE_SLOT] //[ptr to slot 0]
+    //2. read from the storage slot -> sload
+    sload //[value of number of horses]
+    //3. push the free memory pointer as byte offset
+    0x00//[0, value of number of horses]
+    //4. mstore for storing the value onto memory
+    mstore //[], memory: [value]
+    //5. push the size of the value to read from memory
+    0x20 //32 bytes [0x20]
+    //6. push the byte offset to read the memory from
+    0x00 //Offset [0x00, 0x20]
+    //7. return the value off the memory 
+    return //[]
+}
