@@ -1,0 +1,69 @@
+#include "../../lib/huffmate/src/data-structures/Hashmap.huff"
+
+/** HorseStore interface*/
+#define function mintHorse() nonpayable returns()
+#define function feedHorse(uint256 horseId) nonpayable returns()
+#define function isHappyHorse(uint256 horseId) view returns(bool)
+#define function horseIdToFedTimeStamp(uint256 id) view returns(uint256)
+#define function HORSE_HAPPY_IF_FED_WITHIN() view returns(uint256)
+
+#define constant HORSE_ID_TO_FED_TIMESTAMP = FREE_STORAGE_POINTER() //storage slot for the mapping
+
+#define macro MAIN() = takes(0) returns(0){
+    0x00 calldataload 0xe0 shr
+    dup1 __FUNC_SIG(mintHorse) eq mintHorseJump jumpi
+    
+    dup1 __FUNC_SIG(feedHorse) eq feedHorseJump jumpi
+    
+    dup1 __FUNC_SIG(isHappyHorse) eq isHappyHorseJump jumpi 
+
+    dup1 __FUNC_SIG(horseIdToFedTimeStamp) eq horseToFedJump jumpi 
+
+    __FUNC_SIG(HORSE_HAPPY_IF_FED_WITHIN) eq horseHappyJump jumpi
+
+    0x00 0x00 revert
+
+    mintHorseJump: 
+        MINT_HORSE()
+    feedHorseJump:
+        FEED_HORSE()
+    isHappyHorseJump:
+        IS_HORSE_HAPPY()
+    horseToFedJump:
+        GET_HORSE_FED_TIMESTAMP()
+    horseHappyJump:
+        HORSE_HAPPY_IF_FED_WITHIN()
+}
+
+#define macro MINT_HORSE() = takes(0) returns(0){}
+
+#define macro FEED_HORSE() = takes(0) returns(0){
+    //0. store timestamp
+    //1. fetch the horseId from the calldata
+    //2. for that horseId fetch the slot number
+    //3. store block.timestamp to that slot
+    timestamp
+    0x04
+    calldataload //[horseId, timestamp]
+    [HORSE_ID_TO_FED_TIMESTAMP] //[storageSlotMapping, horseId, timestamp]
+    STORE_ELEMENT_FROM_KEYS(0x00)
+    stop
+
+}
+
+#define macro IS_HORSE_HAPPY() = takes(0) returns(0){}
+
+#define macro GET_HORSE_FED_TIMESTAMP() = takes(0) returns(1){
+    //read calldata for the horseId value
+    0x04 //[0x04]
+    calldataload //[horseID]
+    [HORSE_ID_TO_FED_TIMESTAMP] //[storageSlotMappingPointer, horseID]
+    LOAD_ELEMENT_FROM_KEYS(0x00) //[value]
+    0x00 //[0x00, value]
+    mstore //[], [m:0x00 => value]
+    0x20 //[0x20]
+    0x00 //[0x00, 0x20], [offset, size]
+    return
+}
+
+#define macro HORSE_HAPPY_IF_FED_WITHIN() = takes(0) returns(0){}
