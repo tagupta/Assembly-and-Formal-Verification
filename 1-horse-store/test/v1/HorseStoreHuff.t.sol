@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 import {Base_TestV1, HorseStore, IHorseStore} from "./Base_TestV1.t.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";

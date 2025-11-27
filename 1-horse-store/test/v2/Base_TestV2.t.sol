@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 import {HorseStore} from "src/horseStoreV2/HorseStore.sol";
 import {Test, console2} from "forge-std/Test.sol";
@@ -14,7 +14,7 @@ abstract contract Base_TestV2 is Test {
         horseStore = new HorseStore();
     }
 
-    function testName() public {
+    function testName() public view{
         string memory name = horseStore.name();
         assertEq(name, NFT_NAME);
     }
