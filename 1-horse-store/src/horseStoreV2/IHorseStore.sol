@@ -5,7 +5,6 @@ import {IERC721Enumerable} from "lib/openzeppelin-contracts/contracts/token/ERC7
 
 /* 
  * @title IHorseStore
- * @author equestrian_lover_420
  */
 interface IHorseStore is IERC721Enumerable {
     function mintHorse() external;

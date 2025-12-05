@@ -2,6 +2,7 @@
 pragma solidity ^0.8.3;
 
 import {Base_Test, console2} from "./Base_Test.t.sol";
+import {CompactCodeBase} from 'test/CompactCodeBase.sol';
 import {MathMasters} from "src/MathMasters.sol";
 
 contract MathMastersTest is Base_Test {
@@ -42,6 +43,45 @@ contract MathMastersTest is Base_Test {
         // depending on whether you want to consider such an overflow case as passing or failing.
     }
 
+    function testMulWadUpFuzzInputOne() public {
+        uint256 x = 16877076170751140273593;
+        uint256 y = 10163048856434588128724;
+        if(y <= type(uint256).max / x){
+            uint256 result = MathMasters.mulWadUp(x, y);
+            uint256 expectedValue = (x * y - 1) / 1e18 + 1;
+            assertEq(result, expectedValue);
+        }
+    }
+
+    function testMulWadUpFuzzInputTwo() public {
+        uint256 x = 228763264180973796704512519836425781249;
+        uint256 y = 170141183460469231731687303715884105728;
+        if(y <= type(uint256).max / x){
+            uint256 result = MathMasters.mulWadUp(x, y);
+            uint256 expectedValue = (x * y - 1) / 1e18 + 1;
+            assertEq(result, expectedValue);
+        }
+    }
+
+    function testMulWadUpFuzzInputThree() external {
+        uint256 x=1999999998;
+        uint256 y=1000000001;
+        if(y <= type(uint256).max / x){
+            uint256 result = MathMasters.mulWadUp(x, y);
+            uint256 expectedValue = (x * y - 1) / 1e18 + 1;
+            assertEq(result, expectedValue);
+        }
+    }
+
+    //halmos --function check_testMulWadUpFuzz_halmos
+    function check_testMulWadUpFuzz_halmos(uint256 x, uint256 y) external {
+        if (x == 0 || y == 0 || y <= type(uint256).max / x) {
+            uint256 result = MathMasters.mulWadUp(x, y);
+            uint256 expected = x * y == 0 ? 0 : (x * y - 1) / 1e18 + 1;
+            assert(result == expected);
+        }
+    }
+
     function testSqrt() public {
         assertEq(MathMasters.sqrt(0), 0);
         assertEq(MathMasters.sqrt(1), 1);
@@ -55,7 +95,48 @@ contract MathMastersTest is Base_Test {
         assert(MathMasters.sqrt(x) == uniSqrt(x));
     }
 
+    function check_testSqrtFuzzUni(uint256 x) external pure{
+        assert(MathMasters.sqrt(x) == uniSqrt(x));
+    }
+
+    //halmos --function testSqrtFuzzSolmate
     function testSqrtFuzzSolmate(uint256 x) public pure {
         assert(MathMasters.sqrt(x) == solmateSqrt(x));
     }
+  
+    function testSqrtFuzzSolmateInputOne() public pure {
+        uint256 x = 0xfffffe00000001;
+        assertEq(MathMasters.sqrt(x), solmateSqrt(x));
+    }
+
+    function testTopHalfsOfMathMastersAndSolMate() external {
+        uint256 x = 0xffff4300100000;
+        CompactCodeBase compactCode = new CompactCodeBase();
+        uint256 z_mathMasters = compactCode.mathMastersTopHalf(x);
+        uint256 z_solMate = compactCode.solmateTopHalf(x);
+        assertEq(z_mathMasters, z_solMate, "Equal assert failed");
+    }
+
+    //halmos --function check_testTopHalfsOfMathMastersAndSolMate_halmos
+    function check_testTopHalfsOfMathMastersAndSolMate_halmos(uint256 x)external{
+        CompactCodeBase compactCode = new CompactCodeBase();
+        uint256 z_mathMasters = compactCode.mathMastersTopHalf(x);
+        uint256 z_solMate = compactCode.solmateTopHalf(x);
+        assert(z_mathMasters == z_solMate);
+    }
+
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff9c0000000000000000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff9c00000000000000000000000000000000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff6a00000000000000000000000000000000000000000000000000000000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff6a000000800000000000000000000000000000000000000000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff6a0000000000000000000000000000000000000000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff4300100000 0xffff4300100000
+// Counterexample: 
+//     p_x_uint256_75fc0cd_00 = 0xffff9f008000004000000000000000
 }

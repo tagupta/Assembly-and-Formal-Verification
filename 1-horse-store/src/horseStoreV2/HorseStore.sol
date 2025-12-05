@@ -6,7 +6,6 @@ import {IHorseStore} from "./IHorseStore.sol";
 
 /* 
  * @title HorseStore
- * @author equestrian_lover_420
  * @notice An NFT that represents a horse. Horses should be fed daily to keep happy, ideally several times a day. 
  */
 contract HorseStore is IHorseStore, ERC721Enumerable {

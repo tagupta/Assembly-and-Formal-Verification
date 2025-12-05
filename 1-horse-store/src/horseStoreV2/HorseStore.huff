@@ -191,14 +191,12 @@
     [HORSE_ID_TO_FED_TIMESTAMP] //[mappingStorage, horseId]
     LOAD_ELEMENT_FROM_KEYS(0x00) //[value]
     timestamp //[timestamp, value]
-    dup2 //[value, timestamp, value]
-    dup2 // [timestamp, value, timestamp, value]
-    sub //[timestamp - value], [timestamp - value, timestamp, value]
-    [HORSE_HAPPY_IF_FED_WITHIN_1_DAY] //[HORSE_HAPPY_IF_FED_WITHIN_1_DAY, timestamp - value, timestamp, value]
-    gt //[HORSE_HAPPY_IF_FED_WITHIN_1_DAY > timestamp - value, timestamp, value]
-    start_return_true //[PC, HORSE_HAPPY_IF_FED_WITHIN_1_DAY > timestamp - value, timestamp, value]
-    jumpi //[timestamp, value]
-    eq //[timestamp == value]
+    sub //[timestamp - value]]
+    [HORSE_HAPPY_IF_FED_WITHIN_1_DAY] //[HORSE_HAPPY_IF_FED_WITHIN_1_DAY, timestamp - value]
+    gt //[HORSE_HAPPY_IF_FED_WITHIN_1_DAY > timestamp - value]
+    start_return_true //[PC, HORSE_HAPPY_IF_FED_WITHIN_1_DAY > timestamp - value]
+    jumpi //[]
+    0x00 //[0x00]
     start_return
     jump
     start_return_true:

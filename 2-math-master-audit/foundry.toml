@@ -2,10 +2,10 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-solc = '0.8.3'
+# solc = "0.8.3"
 
 [fuzz]
-runs = 1000
+runs = 100_000
 max_test_rejects = 65536
 seed = '0x1'
 dictionary_weight = 40

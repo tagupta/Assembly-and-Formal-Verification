@@ -11,9 +11,12 @@ library MathMasters {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
+    //@audit-info unused custom error
     error MathMasters__FactorialOverflow();
     error MathMasters__MulWadFailed();
+    //@audit-info unused custom error
     error MathMasters__DivWadFailed();
+    //@audit-info unused custom error
     error MathMasters__FullMulDivFailed();
 
     /*//////////////////////////////////////////////////////////////
@@ -37,9 +40,23 @@ library MathMasters {
         // @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
-                mstore(0x40, 0xbac65e5b) // `MathMasters__MulWadFailed()`.
-                revert(0x1c, 0x04)
+            if mul(
+                y, // y * (x > type(uint256).max / y)
+                gt(
+                    x, // x > type(uint256).max / y , x > bigNumber/y => 1, x < bigNumber/y => 0
+                    div( //type(uint256).max / y
+                        not(0), //type(uint256).max
+                        y
+                    )
+                )
+            ) { //mem[0x40....0x5f] = 0xbac65e5b
+                //@audit-low free memory pointer is being overritten
+                //@audit-low wrong function selector
+                mstore(0x40, 0xbac65e5b) // `MathMasters__MulWadFailed()` => 0xa56044f7 //0xbac65e5b => MulWadFailed
+                //mem[0x1c..0x1c + 0x04] => revert
+                //Accessing the incorrect memory for revert
+                //@audit-low 
+                revert(0x1c, 0x04) //28 + 4 = 32
             }
             z := div(mul(x, y), WAD)
         }
@@ -50,12 +67,22 @@ library MathMasters {
         /// @solidity memory-safe-assembly
         assembly {
             // Equivalent to `require(y == 0 || x <= type(uint256).max / y)`.
-            if mul(y, gt(x, div(not(0), y))) {
+            if mul(y, gt(x, div(not(0), y))) { // y * x > type(uint256).max / y
                 mstore(0x40, 0xbac65e5b) // `MathMasters__MulWadFailed()`.
                 revert(0x1c, 0x04)
             }
-            if iszero(sub(div(add(z, x), y), 1)) { x := add(x, 1) }
-            z := add(iszero(iszero(mod(mul(x, y), WAD))), div(mul(x, y), WAD))
+            //@audit-high incorrect piece of code
+            if iszero(sub(div(add(z, x), y), 1))  // (( 0 + x) / y - 1) == 0
+            //@note add 1 to x if x/y == 1
+            { x := add(x, 1) }
+            z := add( 
+                //Why check for isZero two times
+                iszero(
+                iszero(
+                mod(mul(x, y), // ((((x * y) % WAD) == 0) == 0) + ((x * y) / WAD)
+                WAD))), 
+            div(mul(x, y), 
+            WAD))
         }
     }
 
@@ -71,15 +98,15 @@ library MathMasters {
 
             // This segment is to get a reasonable initial estimate for the Babylonian method. With a bad
             // start, the correct # of bits increases ~linearly each iteration instead of ~quadratically.
-            let r := shl(7, lt(87112285931760246646623899502532662132735, x))
-            r := or(r, shl(6, lt(4722366482869645213695, shr(r, x))))
-            r := or(r, shl(5, lt(1099511627775, shr(r, x))))
+            let r := shl(7, lt(87112285931760246646623899502532662132735, x)) //(2¹²⁷ - 1)²
+            r := or(r, shl(6, lt(4722366482869645213695, shr(r, x)))) //(2⁷⁹ - 1)² 
+            r := or(r, shl(5, lt(1099511627775, shr(r, x)))) //(2⁴⁰ - 1)²
             // Correct: 16777215 0xffffff
-            r := or(r, shl(4, lt(16777002, shr(r, x))))
+            r := or(r, shl(4, lt(16777002, shr(r, x)))) //(2²⁴ - 1)² 
             z := shl(shr(1, r), z)
 
             // There is no overflow risk here since `y < 2**136` after the first branch above.
-            z := shr(18, mul(z, add(shr(r, x), 65536))) // A `mul()` is saved from starting `z` at 181.
+            z := shr(18, mul(z, add(shr(r, x), 65536))) // A `mul()` is saved from starting `z` at 181. //2¹⁶ 
 
             // Given the worst case multiplicative error of 2.84 above, 7 iterations should be enough.
             z := shr(1, add(z, div(x, z)))
@@ -93,7 +120,7 @@ library MathMasters {
             // If `x+1` is a perfect square, the Babylonian method cycles between
             // `floor(sqrt(x))` and `ceil(sqrt(x))`. This statement ensures we return floor.
             // See: https://en.wikipedia.org/wiki/Integer_square_root#Using_only_integer_division
-            z := sub(z, lt(div(x, z), z))
+            z := sub(z, lt(div(x, z), z)) //z = (z + x/z) / 2
         }
     }
 }
